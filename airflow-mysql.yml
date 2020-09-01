@@ -1,0 +1,7 @@
+---
+
+- name: Installing MY_SQl 
+  hosts: "airflow-mysql-stage"
+  remote_user: root
+  roles:
+    - { role: mysql, ansible_os_family == 'Debian'}

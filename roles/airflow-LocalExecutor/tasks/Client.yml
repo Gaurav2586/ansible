@@ -1,0 +1,268 @@
+---
+
+
+#------------------------------------ Mongo Install---------------------------------------------------------------------------------------------!
+
+- name: Import the public key used by the package management system | mongo install
+  shell: apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv 0C49F3730359A14518585931BC711F9BA15703C6
+
+- name: Create a list file for MongoDB.
+  shell: echo "deb http://repo.mongodb.org/apt/ubuntu xenial/mongodb-org/3.4 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-3.4.list
+
+
+- name: Run the equivalent of "apt-get update" as a separate step
+  apt:
+    update_cache: yes
+
+
+- name: Airflow | Install | Basic Packages
+  shell: "apt-get install -y mongodb-org=3.4.18 mongodb-org-server=3.4.18 mongodb-org-shell=3.4.18 mongodb-org-mongos=3.4.18 mongodb-org-tools=3.4.18 "
+
+
+#------------------------------------ Spark Install & env setup---------------------------------------------------------------------------------------------!
+
+- name: scala install
+  shell: "sudo apt-get install scala -y"
+
+
+- name: Download Spark-2.4.0-bin-hadoop2.7.tgz
+  get_url:
+    url: https://archive.apache.org/dist/spark/spark-2.4.1/spark-2.4.1-bin-hadoop2.7.tgz
+    dest: /tmp
+    mode: 0777
+
+
+- name: Extract Spark-2.4.1-bin-hadoop2.7.tgz into /tmp
+  unarchive:
+    remote_src: yes
+    src: /tmp/spark-2.4.1-bin-hadoop2.7.tgz
+    dest: /tmp
+
+
+- name: delete /tmp/spark directory example
+  shell: "rm -rf /tmp/spark"
+
+
+- name: Move spark-2.4 directory
+  command: mv /tmp/spark-2.4.1-bin-hadoop2.7/ /usr/lib/spark
+  run_once: true
+  become: yes
+  become_user: root
+
+- name: Spark directory owner permission
+  file: dest=/usr/lib/spark owner=dataetl group=dataetl mode=0755 recurse=yes
+
+- name: copy the Hadoop conf to the spark client
+  copy:
+   src: /tmp/hadoop-conf
+   dest: /usr/lib/spark/conf/
+   owner: dataetl
+   group: dataetl
+
+- name: environment variable setup for Spark-hadoop
+  become: yes
+  become_user: dataetl
+  lineinfile:
+    dest: ~/.bashrc
+    insertbefore: BOF
+    line: '{{ item }}'
+  with_items:
+    - 'export SPARK_HOME=/usr/lib/spark'
+    - 'export HADOOP_CONF_DIR=$SPARK_HOME/conf/hadoop-conf'
+    - 'export PATH=$PATH:$SPARK_HOME/bin'
+
+- name: "check Spark-env file is present"
+  stat:
+    path: /usr/lib/spark/conf/spark-env.sh
+  register: file_details
+  become: yes
+  become_user: dataetl
+
+- name: change the spark-env.sh.template to spark-env.sh
+  command: mv /usr/lib/spark/conf/spark-env.sh.template  /usr/lib/spark/conf/spark-env.sh
+  become: yes
+  become_user: dataetl
+  when: file_details.stat.exists == False
+
+
+- name: And hadoop path in  the spark-env.sh
+  become: yes
+  become_user: dataetl
+  lineinfile:
+    dest: /usr/lib/spark/conf/spark-env.sh
+    line: '{{ item }}'
+  with_items:
+    - 'export HADOOP_CONF_DIR=/usr/lib/spark/conf/hadoop-conf'
+    - 'export HADOOP_USER_NAME=hadoop'
+
+#------------------------------------ Sqoop Install & env setup & mapreduce jar setup ---------------------------------------------------------------------------------------------!
+
+- name: Download Sqoop_1.4.7 Download on temp folder
+  get_url:
+    url: https://www.apache.org/dist/sqoop/1.4.7/sqoop-1.4.7.bin__hadoop-2.6.0.tar.gz
+    dest: /tmp
+    mode: 0777
+
+- name: Extract Sqoop-1.4.7 into /tmp
+  unarchive:
+    remote_src: yes
+    src: /tmp/sqoop-1.4.7.bin__hadoop-2.6.0.tar.gz
+    dest: /tmp
+
+
+- name: delete /tmp/sqoop directory example
+  file:
+    path: /tmp/sqoop
+    state: absent
+
+- name: delete /tmp/hadoop directory example
+  file:
+    path: /tmp/hadoop
+    state: absent
+
+- name: "check Sqoop direcotry is present in /tmp"
+  stat:
+    path: /tmp/sqoop-1.4.7.bin__hadoop-2.6.0
+  register: p
+
+- name: "move sqoop-1.4.7 to sqoop"
+  command: mv /tmp/sqoop-1.4.7.bin__hadoop-2.6.0/  /tmp/sqoop
+  when: p.stat.isdir is defined and p.stat.isdir
+
+- name: "check Sqoop direcotry is present in /usr/lib/"
+  stat:
+    path: /usr/lib/sqoop
+  register: sqoop
+ 
+
+- name: Move sqoop-1.4 to /usr/lib/
+  command: mv /tmp/sqoop/ /usr/lib/sqoop
+  when: not sqoop.stat.exists
+
+- name: Sqoop directory owner permission
+  file: dest=/usr/lib/sqoop owner=dataetl group=dataetl mode=0755 recurse=yes
+
+- name: Download hadoop-2.6.5 Download on temp folder
+  get_url:
+    url: https://archive.apache.org/dist/hadoop/core/hadoop-2.6.5/hadoop-2.6.5.tar.gz
+    dest: /tmp
+    mode: 0777
+
+- name: Extract hadoop-2.6.5 into /tmp
+  unarchive:
+    remote_src: yes
+    src: /tmp/hadoop-2.6.5.tar.gz
+    dest: /tmp
+
+
+- name: "check hadoop direcotry is present in /tmp"
+  stat:
+    path: /tmp/hadoop-2.6.5
+  register: x
+
+- name: "move hadoop-2.6.5 to hadoop"
+  command: mv /tmp/hadoop-2.6.5/ /tmp/hadoop
+  when: x.stat.isdir is defined and x.stat.isdir
+
+- name: "check hadoop directory is present in /usr/lib/"
+  stat:
+    path: /usr/lib/hadoop
+  register: hadoop
+
+- name: Move hadoop-2.6.5 to /usr/lib/
+  command: mv /tmp/hadoop/ /usr/lib/hadoop
+  when: not hadoop.stat.exists
+
+- name: Creates empty directory
+  file:
+    path: /usr/lib/hadoop/conf
+    state: directory
+
+- name: hadoop directory owner permission
+  file: dest=/usr/lib/hadoop owner=dataetl group=dataetl mode=0755 recurse=yes
+
+- name: environment variable setup for Sqoop & hadoop
+  become: yes
+  become_user: dataetl
+  lineinfile:
+    insertbefore: BOF
+    dest: ~/.bashrc
+    line: '{{ item }}'
+  with_items:
+    - 'export JAVA_HOME=/usr/lib/jvm/java-1.8.0-openjdk-amd64'
+    - 'export SQOOP_HOME=/usr/lib/sqoop'
+    - 'export PATH=/home/dataetl/.local/bin:$PATH:$SQOOP_HOME/bin:.:'
+    - 'export HADOOP_HOME=/usr/lib/hadoop'
+    - 'export PATH=$PATH:$HADOOP_HOME/bin:$HADOOP_MAPRED_HOME/bin'
+    - 'export HADOOP_MAPRED_HOME=/usr/lib/hadoop/share/hadoop/mapreduce'
+
+
+- name: create a file sqoop-env.sh
+  file:
+    path: /usr/lib/sqoop/conf/sqoop-env.sh
+    state: touch
+    mode: "0755"
+    owner: dataetl
+    group: dataetl
+
+
+- name: setting the sqoop-env.sh
+  become: yes
+  become_user: dataetl
+  lineinfile:
+    dest: /usr/lib/sqoop/conf/sqoop-env.sh
+    line: '{{ item }}'
+  with_items:
+    - 'export HADOOP_COMMON_HOME=/usr/lib/hadoop/'
+    - 'export HADOOP_MAPRED_HOME=$HADOOP_HOME/share/hadoop/mapreduce'
+    - 'export HADOOP_CONF_DIR=$HADOOP_COMMON_HOME/conf'
+
+- name: copy $HADOOP_HOME/share/hadoop/mapreduce/ and paste into folder $SQOOP_HOME/lib
+  shell: "cp /usr/lib/hadoop/share/hadoop/mapreduce/{{ item }}  /usr/lib/sqoop/lib"
+  become: yes
+  become_user: dataetl
+  with_items:
+    - 'hadoop-mapreduce-client-app-2.6.5.jar'
+    - 'hadoop-mapreduce-client-common-2.6.5.jar'
+    - 'hadoop-mapreduce-client-core-2.6.5.jar'
+    - 'hadoop-mapreduce-client-hs-2.6.5.jar'
+    - 'hadoop-mapreduce-client-hs-plugins-2.6.5.jar'
+    - 'hadoop-mapreduce-client-jobclient-2.6.5.jar'
+    - 'hadoop-mapreduce-client-jobclient-2.6.5-tests.jar'
+    - 'hadoop-mapreduce-client-shuffle-2.6.5.jar'
+    - 'hadoop-mapreduce-examples-2.6.5.jar'
+
+
+
+- name: Download mysql-connector-java-8.0.12.jar on /usr/lib/sqoop/lib folder
+  get_url:
+    url: https://repo1.maven.org/maven2/mysql/mysql-connector-java/8.0.12/mysql-connector-java-8.0.12.jar
+    dest: /usr/lib/sqoop/lib 
+    mode: 0755
+
+- name: mysql-connector-java-8.0.12.jar directory owner permission
+  file: dest=/usr/lib/sqoop/lib/mysql-connector-java-8.0.12.jar owner=dataetl group=dataetl mode=0755 
+
+
+#- name: Oracle Database 11.2.0.4 JDBC Driver
+#  become: yes
+#  debconf: name='ojdbc6.jar' question='shared/accepted-oracle-license-v1-1' value='true' vtype='select'
+
+#- name: Download ojdbc6.jar to /usr/lib/sqoop/lib
+#  get_url:
+#    url: http://download.oracle.com/otn/utilities_drivers/jdbc/11204/ojdbc6.jar
+#    dest: /usr/lib/sqoop/lib 
+#    mode: 0755
+
+#- name: ojdbc6.jar directory owner permission
+#  file: dest=/usr/lib/sqoop/lib/ojdbc6.jar owner=dataetl group=dataetl mode=0755
+
+- name: Download sqoop-1.4.7-hadoop260.jar on /usr/lib/sqoop folder
+  get_url:
+    url: http://central.maven.org/maven2/org/apache/sqoop/sqoop/1.4.7/sqoop-1.4.7-hadoop260.jar
+    dest: /usr/lib/sqoop/
+    mode: 0755
+
+- name: sqoop-1.4.7-hadoop260.jar  directory owner permission
+  file: dest=/usr/lib/sqoop/sqoop-1.4.7-hadoop260.jar owner=dataetl group=dataetl mode=0755 
+

@@ -1,0 +1,24 @@
+[all:vars]
+ansible_python_interpreter=/usr/bin/python3
+
+[airflow-master]
+10.112.x.x ansible_ssh_private_key_file=keys/aws-key.pem
+
+[airflow-worker]
+10.112.x.x ansible_ssh_private_key_file=keys/aws-key.pem
+10.112.x.x ansible_ssh_private_key_file=keys/aws-key.pem
+
+[dataproc]
+ip-10-112-x-x
+ip-10-112-x-x
+ip-10-112-x-x
+
+[pub_key]
+10.112.x.x ansible_ssh_private_key_file=keys/aws-key.pem
+10.112.x.x ansible_ssh_private_key_file=keys/aws-key.pem
+10.112.x.x ansible_ssh_private_key_file=keys/aws-key.pem
+
+
+[hadoop_conf]
+10.112.x.x ansible_ssh_private_key_file=keys/aws-key.pem
+

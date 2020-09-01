@@ -1,0 +1,47 @@
+---
+
+- name: Installing redis-server-{{ env }}
+  hosts: "redis-server-{{ env }}"
+  remote_user: ubuntu
+  gather_facts: true
+  become: yes
+  become_user: root
+  roles:
+    - redisserver
+
+- name: Installing mysql server
+  hosts: "airflow-Haproxy-stage"
+  remote_user: ubuntu
+  gather_facts: true
+  become: yes
+  become_user: root
+  roles:
+    - { role: mysql, ansible_os_family == 'Debian', vars_file: 'Debian' }
+
+
+- name: Installing Airflow-{{ env }}
+  hosts: "airflow-master-2-{{ env }}"
+  remote_user: ubuntu
+  gather_facts: true
+  become: yes
+  become_user: root
+  roles:
+    - { role: airflow-master-2, ansible_os_family == 'Debian'}
+
+- name: Installing Airflow-{{ env }}
+  hosts: "airflow-master-2-{{ env }}"
+  remote_user: ubuntu
+  gather_facts: true
+  become: yes
+  become_user: root
+  roles:
+    - airflow-master-2
+
+- name: Setting up Loadbalancer for HA.
+  hosts: airflow-Haproxy-stage
+  remote_user: ubuntu
+  gather_facts: true
+  become: yes
+  become_user: root
+  tasks:
+     - include_tasks: ha-playbook.yml

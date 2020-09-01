@@ -1,0 +1,29 @@
+EHLO circles.xyz
+AUTH LOGIN
+QUtJQVdRV0FYRU5G
+QkxRNdvWXczeXVZQnlpaGdqLysxTUM4cTJ3NXg=
+MAIL FROM: systemd@circles.xyz
+RCPT TO: dp-infra@circles.xyz
+DATA
+Subject: le-indonesia-airflow-daemon crashed/stop
+
+Hi Datateam,
+
+Your airflow scheduler daemon just now crashed or stopped. please check and fix it.
+
+Data DevOps 
+
+
+Commands Reference:-
+
+To check the status of the daemon
+
+service airflow-scheduler status
+
+if you find the service is in "inactive" state. try to run below command.
+
+service airflow-scheduler start
+
+.
+QUIT
+

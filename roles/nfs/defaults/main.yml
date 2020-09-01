@@ -1,0 +1,15 @@
+
+# NFS install mode: server or client
+nfs_mode: server
+
+# Line to add to the /etc/exports file
+nfs_exports:
+  - path: "/home/common_dag_folder"
+    export: "vnode*(fsid=0,rw,async,no_root_squash,no_subtree_check,insecure)"
+
+# Line to add to the /etc/fstab file
+nfs_client_imports:
+  - local: "/home/common_dag_folder"
+    remote: "/home/common_dag_folder"
+    server_host: "{{hostvars['airflow-nfs-server-stage']['ansible_default_ipv4']}}"
+

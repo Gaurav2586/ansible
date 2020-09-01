@@ -1,0 +1,22 @@
+---
+- name: Creating a public key for multiple server to connect hadoop server.
+  hosts: pub_key
+  remote_user: root
+  tasks:
+     - include_tasks: tasks/pub_key.yml
+
+
+- name: Copy hadoop conf file to ansible master temp folder.
+  hosts: hadoop_conf
+  remote_user: root
+  tasks:
+     - include_tasks: tasks/hadoop_conf_copy.yml
+
+
+- name: airflow-master
+  hosts: "airflow-master"
+  remote_user: root
+  roles:
+    - { role: airflow-master }
+
+

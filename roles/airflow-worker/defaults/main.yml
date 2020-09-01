@@ -1,0 +1,191 @@
+---
+## General
+
+airflow_version: 1.9.0
+airflow_extra_packages: []
+
+airflow_pip_executable: "pip"
+airflow_executable: "/usr/local/bin/airflow"
+
+airflow_required_libs:
+  - python-pip
+  - acl
+
+
+ground_setup_Packages:
+  - python-setuptools 
+  - openjdk-8-jdk
+  - python-mysqldb
+  - build-essential
+  - libssl-dev
+  - libffi-dev
+  - python3-dev
+  - libmysqlclient-dev 
+
+
+# Owner
+airflow_user: dataetl
+airflow_group: dataetl
+
+## Service options
+airflow_scheduler_runs: 
+
+airflow_services:
+  airflow-webserver:
+    enabled: no
+    state: started
+  airflow-scheduler:
+    enabled: no
+    state: started
+  airflow-worker:
+    enabled: yes
+    state: started
+  airflow-flower:
+    enabled: no
+    state: started
+
+# Files & Paths
+airflow_home: /opt/circles/airflow
+airflow_dags_folder: "{{ airflow_home }}/dags"
+airflow_logs_folder: /opt/circles/airflow
+airflow_child_process_log_folder: "{{ airflow_logs_folder }}/scheduler"
+airflow_pidfile_folder: "/opt/circles/airflow"
+airflow_environment_file_folder: /etc/sysconfig
+airflow_environment_extra_vars: []
+   # - name: PATH
+    #  value: "/custom/path/bin:$PATH"
+
+# Allowing playbooks to provide external config files&templates
+airflow_extra_conf_path: "{{ playbook_dir }}/files/airflow"
+airflow_extra_conf_template_path: "{{ playbook_dir }}/templates/airflow"
+airflow_config_template_path: airflow.cfg.j2
+airflow_plugins_folder: "{{ airflow_dags_folder }}/plugins"
+
+#### AIRFLOW CONFIG #######
+# default main airflow configuration in yaml form
+default_airflow:
+  core:
+    airflow_home: "{{ airflow_home }}"
+    dags_folder: "{{ airflow_home }}/dags"
+    base_log_folder: "{{ airflow_home }}/logs"
+    sql_alchemy_conn: mysql://airflow:airflow@10.112.x.x:3306/airflow
+    sql_alchemy_pool_size: 5
+    sql_alchemy_pool_recycle: 3600
+    dag_concurrency: 16
+    parallelism: 32
+    executor: CeleryExecutor
+    plugins_folder: "{{  airflow_dags_folder }}/plugins"
+    load_examples: False
+    donot_pickle: False
+    dagbag_import_timeout: 30
+    task_runner: BashTaskRunne
+    default_impersonation: "{{ airflow_user }}"
+    security:
+    unit_test_mode: False
+
+  cli:
+    api_client: airflow.api.client.local_client
+    endpoint_url: http://localhost:8080
+
+  api:
+    auth_backend: airflow.api.auth.backend.default
+
+  webserver:
+    base_url: http://10.112.x.x:8080
+    web_server_host: 0.0.0.0
+    web_server_port: 8080
+    web_server_ssl_cert:
+    web_server_ssl_key:
+    web_server_worker_timeout: 120
+    worker_refresh_batch_size: 1
+    worker_refresh_interval: 30
+    secret_key: temporary_key
+    workers: 4
+    worker_class: sync
+    access_logfile: "-"
+    error_logfile: "-"
+    expose_config: False
+    authenticate: False
+    filter_by_owner: False
+    owner_mode: user
+    dag_orientation: LR
+    demo_mode: False
+    log_fetch_timeout_sec: 5
+    hide_paused_dags_by_default: False
+
+  email:
+    email_backend: airflow.utils.email.send_email_smtp
+
+  smtp:
+    smtp_host: email-smtp.us-east-1.amazonaws.com
+    smtp_starttls: False
+    smtp_ssl: True
+    smtp_user: AKIAWQWAXEN
+    smtp_password: BLQ6mkKOXp/h3GoYw3hgj/+1MC8q
+    smtp_port: 465
+    smtp_mail_from: celery.aus@circles.xyz
+
+  celery:
+    celery_app_name: airflow.executors.celery_executor
+    celeryd_concurrency: 16
+    worker_log_server_port: 8793
+    broker_url: redis://10.112.x.x:6379/0
+    celery_result_backend: db+mysql://airflow:airflow@10.112.x.x:3306/airflow
+    flower_host: 0.0.0.0
+    flower_port: 5555
+    default_queue: default
+
+  operators:
+    default_owner: Airflow
+    default_cpus: 1
+    default_ram: 512
+    default_disk: 512
+    default_gpus: 0
+
+  scheduler:
+    job_heartbeat_sec: 5
+    scheduler_heartbeat_sec: 5
+    run_duration: -1
+    min_file_process_interval: 0
+    dag_dir_list_interval: 300
+    print_stats_interval: 30
+    scheduler_zombie_task_threshold: 300
+    catchup_by_default: True
+    child_process_log_directory: "{{ airflow_home }}/logs/scheduler"
+    statsd_on: False
+    statsd_host: localhost
+    statsd_port: 8125
+    statsd_prefix: airflow
+    max_threads: 2
+    authenticate: False
+
+  mesos:
+    master: localhost:5050
+    framework_name: Airflow
+    task_cpu: 1
+    task_memory: 256
+    checkpoint: False
+    failover_timeout: 604800
+    authenticate: False
+    default_principal: admin
+    default_secret: admin
+
+  kerberos:
+    ccache: /tmp/airflow_krb5_ccache
+    principal: airflow
+    reinit_frequency: 3600
+    kinit_path: kinit
+    keytab: airflow.keytab
+
+  github_enterprise:
+    api_rev: v3
+
+  admin:
+    hide_sensitive_variable_fields: True
+
+# stub out the airflow override yaml block
+airflow: {}
+
+# added because some packages can not install if not enough memory. gives option to pass pip arg --no-cache-dir
+airflow_install_pip_extra_args: ''
+airflow_packages_pip_extra_args: ''

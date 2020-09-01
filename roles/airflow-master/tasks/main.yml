@@ -1,0 +1,37 @@
+---
+
+
+- name: Airflow | Ground_Setup
+  import_tasks: ground_setup.yml
+  tags:
+    - Ground_Setup
+    - airflow_Ground_Setup
+
+- name: Airflow | Install
+  import_tasks: install.yml
+  tags:
+    - install
+    - airflow_install
+
+- name: Airflow | Config
+  import_tasks: config.yml
+  tags:
+    - config
+    - airflow_config
+
+- name: Airflow | Service
+  import_tasks: service.yml
+  tags:
+    - service
+    - airflow_service
+
+
+- name: Airflow | CLIENT_INSTALL
+  import_tasks: Client.yml
+  tags:
+    - CLIENT_INSTALL
+
+- name: Airflow | systemd_Email Configuration 
+  import_tasks: email.yml
+  tags:
+    - EMAIL_Config

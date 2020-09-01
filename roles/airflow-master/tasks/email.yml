@@ -1,0 +1,27 @@
+---
+
+- name: create Directory under airflow home folder 
+  file:
+      path: /opt/circles/airflow/email
+      state: directory
+      owner: dataetl
+      group: dataetl
+
+
+- name: copy the systemd script and txt file under folder email
+  copy:
+      owner: dataetl
+      group: dataetl
+      src: "templates/email/{{ item }}"
+      dest: "/opt/circles/airflow/email/"
+  with_items:
+    -  airflow-flower.sh
+    -  airflow-scheduler.txt
+    -  airflow-worker.sh
+    -  airflow-flower.txt
+    -  airflow-webserver.sh
+    -  airflow-worker.txt
+    -  airflow-scheduler.sh
+    -  airflow-webserver.txt
+
+

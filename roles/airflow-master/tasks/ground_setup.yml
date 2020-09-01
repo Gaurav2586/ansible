@@ -1,0 +1,87 @@
+---
+
+- name: Run the equivalent of "apt-get update" as a separate step
+  apt:
+    update_cache: yes
+
+- name: Install the latest pip
+  apt:
+    name: python3-pip
+
+- name: Airflow | Install | Basic Packages
+  apt:
+     name: "{{ ground_setup_Packages }}"
+
+- name: Airflow | Install | Upgrade pip
+  shell: "pip3 install --upgrade pip"
+
+- name: Airflow | Install | Upgrade setuptools
+  shell: "pip3 install --upgrade setuptools"
+
+- name: Airflow | Install | redis
+  shell: "pip3 install redis"
+
+- name: Airflow | Install | Numpy
+  pip:
+     name: numpy
+     version: latest
+  sudo: yes
+
+- name: Airflow | Install | cython
+  pip:
+     name: cython
+     version: latest
+  sudo: yes
+
+- name: Airflow | Install | With pip
+  pip:
+     name: apache-airflow
+     version: "{{ airflow_version }}"
+
+- name: Airflow | Install | crypto
+  pip:
+     name: apache-airflow[crypto]
+     version: "{{ airflow_version }}"
+  register: airflow_install
+
+- name: Airflow | Install | hive
+  pip:
+     name: apache-airflow[hive]
+     version: "{{ airflow_version }}"
+  register: airflow_install
+
+- name: Airflow | Install | jdbc
+  pip:
+     name: apache-airflow[jdbc]
+     version: "{{ airflow_version }}"
+  register: airflow_install
+
+
+- name: Airflow | Install | s3
+  pip:
+     name: apache-airflow[s3]
+     version: "{{ airflow_version }}"
+  register: airflow_install
+
+- name: Airflow | Install | slack
+  pip:
+     name: apache-airflow[slack]
+     version: "{{ airflow_version }}"
+  register: airflow_install
+
+- name: Airflow | Install | cryptography
+  pip:
+     name: apache-airflow[cryptography]
+     version: "{{ airflow_version }}"
+  register: airflow_install
+
+- name: Airflow | Install | celery
+  pip:
+     name: apache-airflow[celery]
+     version: "{{ airflow_version }}"
+  register: airflow_install
+
+- name: Airflow | Install | mysqlClient
+  pip:
+     name: mysqlclient
+

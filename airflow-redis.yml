@@ -1,0 +1,9 @@
+---
+
+- name: Installing redis-server-{{ env }}
+  hosts: "redis-server"
+  remote_user: ubuntu
+  become: yes
+  become_user: root
+  roles:
+    - { role: redis }

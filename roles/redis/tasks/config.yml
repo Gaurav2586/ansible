@@ -1,0 +1,60 @@
+---
+
+- name: REDIS | Create server conf path
+  file:
+    path: "{{ redis_conf_path }}"
+    state: directory
+    owner: "{{ redis_user }}"
+    group: "{{ redis_group }}"
+    mode: 0755
+
+- name: REDIS | Copy server config
+  template:
+    src: "{{ redis_server_conf_template_path }}"
+    dest: "{{ redis_conf_path }}/redis.conf"
+    owner: "{{ redis_user }}"
+    group: "{{ redis_group }}"
+    mode: 0644
+
+- name: REDIS | Copy manager script
+  template:
+    src: "{{ redis_manager_template_path }}"
+    dest: "{{ redis_conf_path }}/instance-manager.sh"
+    owner: "{{ redis_user }}"
+    group: "{{ redis_group }}"
+    mode: 0755
+
+- name: REDIS | Copy redis-server service config
+  template:
+    src: "{{ redis_service_template_path }}"
+    dest: /etc/systemd/system/redis-server.service
+    owner: "{{ redis_user }}"
+    group: "{{ redis_group }}"
+    mode: 0755
+  notify: restart redis
+
+- name: REDIS | Copy cluster creator
+  template:
+    src: "{{ item }}.j2"
+    dest: "{{ redis_conf_path }}/{{ item }}"
+    owner: "{{ redis_user }}"
+    group: "{{ redis_group }}"
+    mode: 0755
+  with_items:
+    - cluster-config.sh
+    - cluster-creator.sh
+    - upgrading-helper.sh
+  when: redis_mode == 'cluster'
+
+#  https://redis.io/topics/admin Redis setup hint
+
+- name: REDIS | Set overcommit on sysctl
+  sysctl:
+    name: vm.overcommit_memory
+    value: 1
+    state: present
+
+- name: REDIS | Set transparent hugepage
+  shell: 'echo never > /sys/kernel/mm/transparent_hugepage/enabled'
+  changed_when: false
+  when: disable_transparent_hugepage == true
